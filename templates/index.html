@@ -1,0 +1,717 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CineBook - Movie Ticket Booking</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<div id="ticketModal" class="ticket-modal" hidden>
+    <div class="ticket-card" role="dialog" aria-modal="true"
+         aria-labelledby="ticketTitle">
+
+        <div class="ticket-success">
+            <div class="ticket-check">✓</div>
+            <h2 id="ticketTitle">Booking Confirmed!</h2>
+            <p>🍿 Sit back, relax & enjoy your movie!</p>
+            <div class="ticket-reference" id="ticketReference">
+                BOOKING ID
+            </div>
+        </div>
+
+        <div class="ticket-movie">
+            <img id="ticketPoster" class="ticket-poster" src=""
+                 alt="Movie poster">
+            <div>
+                <h3 id="ticketMovieName">Movie title</h3>
+                <p id="ticketShowInfo">Show details</p>
+            </div>
+        </div>
+
+        <div class="ticket-divider"></div>
+
+        <div class="ticket-details">
+            <div class="ticket-detail">
+                <span>Date</span>
+                <strong id="ticketDate">—</strong>
+            </div>
+            <div class="ticket-detail">
+                <span>Show time</span>
+                <strong id="ticketTime">—</strong>
+            </div>
+            <div class="ticket-detail">
+                <span>Seats</span>
+                <strong id="ticketSeats">—</strong>
+            </div>
+            <div class="ticket-detail">
+                <span>Tickets</span>
+                <strong id="ticketCount">—</strong>
+            </div>
+        </div>
+
+        <div class="ticket-total">
+            <span>Total amount</span>
+            <strong id="ticketTotal">₹0</strong>
+        </div>
+
+        <div class="ticket-actions">
+            <button type="button" onclick="closeTicket()">Done</button>
+            <button type="button" class="ticket-done"
+                    onclick="closeTicket(); viewMyBookings()">
+                My Bookings
+            </button>
+        </div>
+    </div>
+</div>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<header>
+    <nav class="navbar">
+        <h1 class="logo">🎬 CineBook</h1>
+
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#movies">Movies</a>
+            <a href="#about">About</a>
+
+            <button class="login-btn" onclick="showLogin()">
+                Login / Sign Up
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+<!-- ================= HERO SECTION ================= -->
+
+<section class="hero" id="home">
+
+    <div class="hero-content">
+
+        <h2>Book Your Movie Tickets Online</h2>
+
+        <p>
+            Discover your favourite movies, choose your seats
+            and enjoy unforgettable moments on the big screen.
+        </p>
+
+        <a href="#movies" class="hero-btn">
+            Explore Movies
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= MOVIES SECTION ================= -->
+
+<main>
+
+<section class="movies-section" id="movies">
+
+    <h2>Now Showing 🎬</h2>
+
+    <p class="section-description">
+        Search and select your favourite movie.
+    </p>
+
+
+    <!-- SEARCH -->
+
+    <div class="search-container">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search movies..."
+            aria-label="Search movies"
+        >
+
+    </div>
+
+
+    <!-- CATEGORY FILTERS -->
+
+    <div class="filter-container">
+
+        <button class="filter-btn active" data-filter="all">
+            All Movies
+        </button>
+
+        <button class="filter-btn" data-filter="action">
+            Action
+        </button>
+
+        <button class="filter-btn" data-filter="comedy">
+            Comedy
+        </button>
+
+        <button class="filter-btn" data-filter="drama">
+            Drama
+        </button>
+
+        <button class="filter-btn" data-filter="sci-fi">
+            Sci-Fi
+        </button>
+
+    </div>
+
+
+    <!-- MOVIE CARDS -->
+
+    <div class="movie-grid">
+
+
+        <!-- AVENGERS -->
+
+        <article class="movie-card"
+                 data-title="Avengers Endgame"
+                 data-category="action">
+
+            <img
+                src="{{ url_for('static', filename='images/avengers.jpg') }}"
+                alt="Avengers Endgame poster"
+                class="movie-poster"
+            >
+
+            <div class="movie-info">
+
+                <h3>Avengers: Endgame</h3>
+
+                <p>Action | English</p>
+
+                <p class="rating">⭐ 8.4/10</p>
+
+                <p class="price">Starting ₹180</p>
+
+                <button
+                    class="book-btn"
+                    onclick="bookMovie('Avengers: Endgame')">
+
+                    Book Tickets
+
+                </button>
+
+            </div>
+
+        </article>
+
+
+        <!-- BHOOL BHULAIYAA 3 -->
+
+        <article class="movie-card"
+                 data-title="Bhool Bhulaiyaa 3"
+                 data-category="comedy">
+
+            <img
+                src="{{ url_for('static', filename='images/bhool_bhulaiyaa_three.jpg') }}"
+                alt="Bhool Bhulaiyaa 3 poster"
+                class="movie-poster"
+            >
+
+            <div class="movie-info">
+
+                <h3>Bhool Bhulaiyaa 3</h3>
+
+                <p>Comedy | Hindi</p>
+
+                <p class="rating">⭐ 6.2/10</p>
+
+                <p class="price">Starting ₹150</p>
+
+                <button
+                    class="book-btn"
+                    onclick="bookMovie('Bhool Bhulaiyaa 3')">
+
+                    Book Tickets
+
+                </button>
+
+            </div>
+
+        </article>
+
+
+        <!-- 3 IDIOTS -->
+
+        <article class="movie-card"
+                 data-title="3 Idiots"
+                 data-category="drama">
+
+            <img
+                src="{{ url_for('static', filename='images/3-idiots.jpg') }}"
+                alt="3 Idiots poster"
+                class="movie-poster"
+            >
+
+            <div class="movie-info">
+
+                <h3>3 Idiots</h3>
+
+                <p>Drama | Hindi</p>
+
+                <p class="rating">⭐ 8.4/10</p>
+
+                <p class="price">Starting ₹120</p>
+
+                <button
+                    class="book-btn"
+                    onclick="bookMovie('3 Idiots')">
+
+                    Book Tickets
+
+                </button>
+
+            </div>
+
+        </article>
+
+
+        <!-- INTERSTELLAR -->
+
+        <article class="movie-card"
+                 data-title="Interstellar"
+                 data-category="sci-fi">
+
+            <img
+                src="{{ url_for('static', filename='images/interstellar.jpg') }}"
+                alt="Interstellar poster"
+                class="movie-poster"
+            >
+
+            <div class="movie-info">
+
+                <h3>Interstellar</h3>
+
+                <p>Sci-Fi | English</p>
+
+                <p class="rating">⭐ 8.7/10</p>
+
+                <p class="price">Starting ₹200</p>
+
+                <button
+                    class="book-btn"
+                    onclick="bookMovie('Interstellar')">
+
+                    Book Tickets
+
+                </button>
+
+            </div>
+
+        </article>
+
+
+        <!-- JAWAN -->
+
+        <article class="movie-card"
+                 data-title="Jawan"
+                 data-category="action">
+
+            <img
+                src="{{ url_for('static', filename='images/jawan.jpg') }}"
+                alt="Jawan poster"
+                class="movie-poster"
+            >
+
+            <div class="movie-info">
+
+                <h3>Jawan</h3>
+
+                <p>Action | Hindi</p>
+
+                <p class="rating">⭐ 6.9/10</p>
+
+                <p class="price">Starting ₹160</p>
+
+                <button
+                    class="book-btn"
+                    onclick="bookMovie('Jawan')">
+
+                    Book Tickets
+
+                </button>
+
+            </div>
+
+        </article>
+
+
+    </div>
+
+
+    <p id="noResults" hidden>
+        No movies found. Try another search.
+    </p>
+
+</section>
+
+
+<!-- ================= ABOUT SECTION ================= -->
+
+<section id="about" class="about-section">
+
+    <h2>About CineBook</h2>
+
+    <p>
+        CineBook makes it easy to explore movies, select your
+        favourite seats and book cinema tickets online.
+    </p>
+
+</section>
+
+</main>
+
+
+<!-- ================= MOVIE BOOKING MODAL ================= -->
+
+<div id="bookingModal" class="booking-modal" hidden>
+
+    <div class="booking-box">
+
+        <button
+            type="button"
+            class="close-btn"
+            onclick="closeBooking()"
+            aria-label="Close booking">
+
+            ✕
+
+        </button>
+
+
+        <h2>🎬 Book Your Tickets</h2>
+
+        <p id="selectedMovieName">
+            Select your movie
+        </p>
+
+
+        <!-- STEP 1: BOOKING DETAILS -->
+
+        <div class="booking-details">
+
+            <h3>1. Select Your Show</h3>
+
+
+            <label for="bookingCity">
+                Select City
+            </label>
+
+            <select id="bookingCity">
+
+                <option value="Indore">Indore</option>
+
+                <option value="Bhopal">Bhopal</option>
+
+                <option value="Mumbai">Mumbai</option>
+
+                <option value="Delhi">Delhi</option>
+
+            </select>
+
+
+            <label for="bookingCinema">
+                Cinema Hall
+            </label>
+
+            <select id="bookingCinema">
+
+                <option value="CineBook Cinemas - Vijay Nagar">
+                    CineBook Cinemas - Vijay Nagar
+                </option>
+
+                <option value="CineBook Cinemas - Palasia">
+                    CineBook Cinemas - Palasia
+                </option>
+
+                <option value="CineBook Cinemas - C21 Mall">
+                    CineBook Cinemas - C21 Mall
+                </option>
+
+            </select>
+
+
+            <label for="bookingDate">
+                Select Date
+            </label>
+
+            <input
+                type="date"
+                id="bookingDate"
+                required
+            >
+
+
+            <label for="bookingShow">
+                Show Timing
+            </label>
+
+            <select id="bookingShow">
+
+                <option value="10:00 AM">
+                    10:00 AM
+                </option>
+
+                <option value="01:30 PM">
+                    01:30 PM
+                </option>
+
+                <option value="05:00 PM">
+                    05:00 PM
+                </option>
+
+                <option value="08:30 PM">
+                    08:30 PM
+                </option>
+
+            </select>
+
+
+            <button
+                type="button"
+                class="book-btn"
+                onclick="openSeatSelection()">
+
+                Choose Your Seats →
+
+            </button>
+
+        </div>
+
+
+        <!-- STEP 2: SEAT SELECTION -->
+
+        <div id="seatSection" hidden>
+
+            <h3>2. Choose Your Seats 💺</h3>
+
+
+            <!-- SEAT LEGEND -->
+
+            <div class="seat-legend">
+
+                <span>🟢 Available</span>
+
+                <span>🔵 Selected</span>
+
+                <span>🔴 Booked</span>
+
+            </div>
+
+
+            <!-- CINEMA SCREEN -->
+
+            <div class="cinema-screen">
+                SCREEN THIS WAY
+            </div>
+
+
+            <!-- SEAT LAYOUT GENERATED BY JAVASCRIPT -->
+
+            <div
+                id="seatLayout"
+                class="seat-layout"
+                aria-label="Cinema seat selection">
+
+            </div>
+
+
+            <!-- PRICE SUMMARY -->
+
+            <div class="price-info">
+
+                <p>
+                    <span>Platinum:</span> ₹300
+                </p>
+
+                <p>
+                    <span>Gold:</span> ₹220
+                </p>
+
+                <p>
+                    <span>Silver:</span> ₹150
+                </p>
+
+                <hr>
+
+                <p>
+                    Selected Seats:
+                    <strong id="selectedSeats">None</strong>
+                </p>
+
+                <h3>
+                    Total Amount:
+                    ₹<span id="totalPrice">0</span>
+                </h3>
+
+            </div>
+
+
+            <!-- CONFIRM BOOKING -->
+
+            <button
+                type="button"
+                class="book-btn"
+                onclick="confirmBooking()">
+
+                Confirm Booking ✓
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= LOGIN / SIGNUP MODAL ================= -->
+
+<div id="loginModal" class="login-modal" hidden>
+
+    <div class="login-box">
+
+        <button
+            type="button"
+            class="close-btn"
+            onclick="closeLogin()"
+            aria-label="Close login">
+
+            ✕
+
+        </button>
+
+
+        <h2>Welcome to CineBook</h2>
+
+
+        <!-- LOGIN FORM -->
+
+        <h3>Login to Your Account</h3>
+
+        <form id="loginForm">
+
+            <label for="loginEmail">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="loginEmail"
+                placeholder="Enter your email"
+                required
+            >
+
+
+            <label for="loginPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="loginPassword"
+                placeholder="Enter your password"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="login-btn">
+
+                Login
+
+            </button>
+
+        </form>
+
+
+        <hr>
+
+
+        <!-- REGISTRATION FORM -->
+
+        <h3>Create a New Account</h3>
+
+        <form id="registerForm">
+
+            <label for="registerName">
+                Full Name
+            </label>
+
+            <input
+                type="text"
+                id="registerName"
+                placeholder="Enter your full name"
+                required
+            >
+
+
+            <label for="registerEmail">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="registerEmail"
+                placeholder="Enter your email"
+                required
+            >
+
+
+            <label for="registerPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="registerPassword"
+                placeholder="Minimum 8 characters"
+                minlength="8"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="login-btn">
+
+                Sign Up
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <p>
+        ©️ 2026 CineBook. All rights reserved.
+    </p>
+
+</footer>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
+```
