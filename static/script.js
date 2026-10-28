@@ -305,7 +305,7 @@ window.bookMovie = bookMovie;
 // ========================================
 async function openSeatSelection() {
     if (!currentMovie) {
-        alert("Pehle movie select karo.");
+        alert("Select Movie First.");
         return;
     }
 
@@ -425,7 +425,453 @@ function updatePriceSummary() {
         }
     }
 }
+/* ===== PREMIUM CINEBOOK POPUP ===== */
 
+function addCineBookStyles() {
+    if (document.getElementById("cinebook-premium-css")) return;
+
+    const style = document.createElement("style");
+    style.id = "cinebook-premium-css";
+    style.textContent = `
+        .cb-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(5, 6, 15, .82);
+            backdrop-filter: blur(10px);
+            animation: cbFade .2s ease;
+        }
+
+        .cb-card {
+            width: 100%;
+            max-width: 420px;
+            color: #fff;
+            background: linear-gradient(145deg, #242432, #101019);
+            border: 1px solid #393947;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px #0009;
+            font-family: inherit;
+            animation: cbSlide .28s ease;
+        }
+
+        .cb-head {
+            padding: 25px 24px 18px;
+        }
+
+        .cb-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .cb-title {
+            margin: 0;
+            font-size: 25px;
+            font-weight: 800;
+        }
+
+        .cb-sub {
+            color: #aaaabd;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 8px 0 0;
+        }
+
+        .cb-details {
+            margin: 0 22px;
+            padding: 17px;
+            background: #ffffff08;
+            border: 1px solid #ffffff12;
+            border-radius: 16px;
+        }
+
+        .cb-movie {
+            font-size: 16px;
+            font-weight: 750;
+            margin-bottom: 12px;
+        }
+
+        .cb-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 13px;
+            color: #b8b8c8;
+        }
+
+        .cb-row strong {
+            color: white;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+        .cb-seats {
+            color: #fb7185 !important;
+        }
+
+        .cb-total {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 18px 22px;
+            padding-top: 16px;
+            border-top: 1px dashed #ffffff30;
+            color: #b8b8c8;
+            font-size: 14px;
+        }
+
+        .cb-total strong {
+            color: #fb7185;
+            font-size: 26px;
+        }
+
+        .cb-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 22px 23px;
+        }
+
+        .cb-btn {
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 12px;
+            font-size: 13px;
+            font-weight: 750;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .cb-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .cb-cancel {
+            flex: 1;
+            color: white;
+            background: #ffffff12;
+            border: 1px solid #ffffff18;
+        }
+
+        .cb-confirm {
+            flex: 1.5;
+            color: white;
+            background: linear-gradient(135deg, #fb4165, #c20c39);
+            box-shadow: 0 6px 20px #e11d4833;
+        }
+
+        .cb-btn:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
+        .cb-success {
+            text-align: center;
+            padding: 27px 22px 18px;
+        }
+
+        .cb-check {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 16px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #22c55e20;
+            border: 1px solid #4ade8055;
+            color: #86efac;
+            font-size: 35px;
+        }
+
+        .cb-reference {
+            color: #86efac;
+            font-size: 12px;
+            margin-top: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        @keyframes cbFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes cbSlide {
+            from { opacity: 0; transform: translateY(15px) scale(.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cb-overlay, .cb-card { animation: none; }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+function cbEscape(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[c]);
+}
+
+function cineBookPopup({
+    title,
+    subtitle,
+    icon = "🎬",
+    movie = "",
+    date = "",
+    time = "",
+    seats = "",
+    count = "",
+    total = "",
+    reference = "",
+    success = false
+}) {
+    addCineBookStyles();
+
+    return new Promise(resolve => {
+        const overlay = document.createElement("div");
+        overlay.className = "cb-overlay";
+
+        const safeMovie = cbEscape(movie);
+        const safeDate = cbEscape(date);
+        const safeTime = cbEscape(time);
+        const safeSeats = cbEscape(seats);
+        const safeTotal = cbEscape(total);
+        const safeReference = cbEscape(reference);
+
+        const qrData = encodeURIComponent(
+            `CineBook Ticket | Booking ID: ${reference}`
+        );
+
+        const qrUrl =
+            `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
+
+        const details = `
+            <div class="cb-details">
+                <div class="cb-movie">🎬 ${safeMovie}</div>
+                <div class="cb-row">
+                    <span>📅 Date</span>
+                    <strong>${safeDate}</strong>
+                </div>
+                <div class="cb-row">
+                    <span>🕒 Showtime</span>
+                    <strong>${safeTime}</strong>
+                </div>
+                <div class="cb-row">
+                    <span>💺 Seats</span>
+                    <strong class="cb-seats">${safeSeats}</strong>
+                </div>
+                ${count !== "" ? `
+                <div class="cb-row">
+                    <span>🎟️ Tickets</span>
+                    <strong>${cbEscape(count)}</strong>
+                </div>` : ""}
+            </div>
+
+            <div class="cb-total">
+                <span>Total amount</span>
+                <strong>₹${safeTotal}</strong>
+            </div>
+        `;
+
+        overlay.innerHTML = `
+            <section class="cb-card"
+                role="dialog"
+                aria-modal="true"
+                aria-label="${success ? "Your E-Ticket" : "Confirm booking"}">
+
+                ${success ? `
+                    <div class="cb-success">
+                        <div class="cb-check">✓</div>
+                        <h2 class="cb-title">E-Ticket Confirmed!</h2>
+                        <p class="cb-sub">
+                            ${cbEscape(subtitle)}
+                        </p>
+                        <div class="cb-reference">
+                            Booking ID: ${safeReference}
+                        </div>
+                    </div>
+
+                    ${details}
+
+                    <div style="text-align:center;padding:18px 12px 8px">
+                        <img
+                            src="${qrUrl}"
+                            alt="Booking QR Code"
+                            style="width:120px;height:120px;background:white;padding:7px;border-radius:10px"
+                        />
+                        <p style="font-size:12px;color:#aaaabd;margin:8px 0">
+                            Your CineBook booking QR
+                        </p>
+                    </div>
+
+                    <div class="cb-actions" style="flex-wrap:wrap">
+                        <button class="cb-btn cb-confirm"
+                            data-download style="flex:1">
+                            📥 Download E-Ticket PDF
+                        </button>
+                        <button class="cb-btn cb-cancel"
+                            data-done style="flex:1">
+                            Done ✓
+                        </button>
+                    </div>
+                ` : `
+                    <div class="cb-head">
+                        <div class="cb-icon">${cbEscape(icon)}</div>
+                        <h2 class="cb-title">${cbEscape(title)}</h2>
+                        <p class="cb-sub">${cbEscape(subtitle)}</p>
+                    </div>
+
+                    ${details}
+
+                    <div class="cb-actions" style="margin-top:18px">
+                        <button class="cb-btn cb-cancel" data-cancel>
+                            Go Back
+                        </button>
+                        <button class="cb-btn cb-confirm" data-confirm>
+                            Confirm &amp; Book →
+                        </button>
+                    </div>
+                `}
+            </section>
+        `;
+
+        const cleanup = result => {
+            document.removeEventListener("keydown", keyHandler);
+            overlay.remove();
+            resolve(result);
+        };
+
+        const keyHandler = event => {
+            if (event.key === "Escape") cleanup(false);
+        };
+
+        overlay.addEventListener("click", event => {
+            if (event.target === overlay) cleanup(false);
+        });
+
+        overlay.querySelector("[data-cancel]")
+            ?.addEventListener("click", () => cleanup(false));
+
+        overlay.querySelector("[data-confirm]")
+            ?.addEventListener("click", () => cleanup(true));
+
+        overlay.querySelector("[data-done]")
+            ?.addEventListener("click", () => cleanup(true));
+
+        overlay.querySelector("[data-download]")
+            ?.addEventListener("click", () => {
+                const printWindow = window.open("", "_blank");
+
+                if (!printWindow) {
+                    alert("PDF ke liye pop-ups allow karo, phir dobara try karo.");
+                    return;
+                }
+
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>CineBook E-Ticket</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background: #f3f4f6;
+                                padding: 25px;
+                                color: #222;
+                            }
+                            .ticket {
+                                max-width: 440px;
+                                margin: auto;
+                                padding: 25px;
+                                background: white;
+                                border: 2px dashed #dc254e;
+                                border-radius: 18px;
+                            }
+                            h1 { color: #dc254e; }
+                            .row {
+                                display: flex;
+                                justify-content: space-between;
+                                gap: 15px;
+                                padding: 12px 0;
+                                border-bottom: 1px solid #eee;
+                            }
+                            .row strong { text-align: right; }
+                            .qr { text-align: center; margin: 22px 0; }
+                            .qr img { width: 140px; height: 140px; }
+                            .total {
+                                font-size: 22px;
+                                color: #dc254e;
+                                font-weight: bold;
+                            }
+                            @media print {
+                                body { background: white; padding: 0; }
+                                .ticket { border: 2px dashed #dc254e; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="ticket">
+                            <h1>🎟️ CINEBOOK</h1>
+                            <h2>E-Ticket Confirmed</h2>
+                            <p>Booking ID: <strong>${safeReference}</strong></p>
+                            <hr>
+                            <div class="row">
+                                <span>Movie</span><strong>${safeMovie}</strong>
+                            </div>
+                            <div class="row">
+                                <span>Date</span><strong>${safeDate}</strong>
+                            </div>
+                            <div class="row">
+                                <span>Showtime</span><strong>${safeTime}</strong>
+                            </div>
+                            <div class="row">
+                                <span>Seats</span><strong>${safeSeats}</strong>
+                            </div>
+                            <div class="row">
+                                <span>Total Amount</span>
+                                <strong class="total">₹${safeTotal}</strong>
+                            </div>
+                            <div class="qr">
+                                <img src="${qrUrl}" alt="Booking QR Code">
+                                <p>Show this ticket at the cinema</p>
+                            </div>
+                            <p style="text-align:center">
+                                Thank you for choosing CineBook 🍿
+                            </p>
+                        </div>
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                }, 700);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+
+                printWindow.document.close();
+            });
+
+        document.addEventListener("keydown", keyHandler);
+        document.body.appendChild(overlay);
+
+        overlay.querySelector(
+            success ? "[data-download]" : "[data-confirm]"
+        ).focus();
+    });
+}
 // ========================================
 // CONFIRM BOOKING
 // ========================================
@@ -441,7 +887,8 @@ async function confirmBooking() {
     }
 
     const showDate = bookingDate.value;
-    const showTime = timeMap[bookingShow.value];
+    const displayTime = bookingShow.value;
+    const showTime = timeMap[displayTime];
 
     if (!showDate || !showTime) {
         alert("Date aur show time check karo.");
@@ -451,14 +898,17 @@ async function confirmBooking() {
     const seats = [...selectedSeats].sort();
     const total = seats.length * currentPrice;
 
-    const confirmed = confirm(
-        `Movie: ${currentMovie.title}\n` +
-        `Date: ${showDate}\n` +
-        `Time: ${bookingShow.value}\n` +
-        `Seats: ${seats.join(", ")}\n` +
-        `Total: ₹${total}\n\n` +
-        ` Are you ready to confirm your booking`
-    );
+    // Attractive confirmation popup
+    const confirmed = await cineBookPopup({
+        title: "Ready for movie night?",
+        subtitle: "Check your ticket details before confirming.",
+        movie: currentMovie.title,
+        date: showDate,
+        time: displayTime,
+        seats: seats.join(", "),
+        count: seats.length,
+        total
+    });
 
     if (!confirmed) return;
 
@@ -482,23 +932,24 @@ async function confirmBooking() {
             })
         });
 
-        alert(
-            "🎉 BOOKING CONFIRMED!\n\n" +
-            `Booking ID: ${result.booking_reference}\n` +
-            `Movie: ${result.movie}\n` +
-            `Date: ${result.show_date}\n` +
-            `Time: ${bookingShow.value}\n` +
-            `Seats: ${result.seats.join(", ")}\n` +
-            `Total: ₹${result.total_amount}\n\n` +
-            '🍿 Sit back, relax & enjoy your movie!\n' +
-             '✨ Thank you for choosing CineBook!'
-        );
-
+        // Booking saved successfully; show custom success ticket.
         closeBooking();
+
+        await cineBookPopup({
+            title: "You're all booked!",
+            subtitle: "Sit back, relax & enjoy your movie! 🍿",
+            movie: result.movie,
+            date: result.show_date,
+            time: displayTime,
+            seats: (result.seats || []).join(", "),
+            total: result.total_amount,
+            reference: result.booking_reference,
+            success: true
+        });
+
     } catch (error) {
         alert("Booking failed: " + error.message);
 
-        // Kisi aur ne seat book kar li ho sakti hai.
         if (error.message.toLowerCase().includes("seat")) {
             await openSeatSelection();
         }
@@ -511,7 +962,6 @@ async function confirmBooking() {
 }
 
 window.confirmBooking = confirmBooking;
-
 // ========================================
 // MY BOOKINGS
 // ========================================
